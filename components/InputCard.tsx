@@ -35,14 +35,18 @@ export function InputCard() {
         body: formData,
       })
 
-      let result
+      // Clone BEFORE the first read so we can fall back safely.
+      const cloned = response.clone()
+
+      let result: any
       try {
         result = await response.json()
-      } catch (jsonError) {
-        const textResponse = await response.text()
+      } catch {
+        const textResponse = await cloned.text()
         console.error("[v0] Non-JSON response:", textResponse)
         throw new Error("Server error occurred. Please check your API configuration and try again.")
       }
+
 
       if (!response.ok) {
         throw new Error(result.error || `Server error: ${response.status}`)
