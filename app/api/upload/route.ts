@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { extractTextFromFile, validateFileUpload } from "@/lib/fileProcessor"
 
+export const runtime = "nodejs" // IMPORTANT: use Node APIs here
+
 export async function POST(request: NextRequest) {
   try {
     console.log("[v0] File upload request received")
 
     const formData = await request.formData()
-    const file = formData.get("file") as File
+    const file = formData.get("file") as File | null
 
     if (!file) {
       console.log("[v0] No file provided in request")
@@ -15,8 +17,8 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Processing file:", file.name, "Type:", file.type, "Size:", file.size)
 
-    // Validate file
-    const validation = validateFileUpload(file)
+    // Validate (avoid reading the body inside validate)
+    const validation = validateFileUpload({ name: file.name, type: file.type, size: file.size })
     if (!validation.valid) {
       console.log("[v0] File validation failed:", validation.error)
       return NextResponse.json({ error: validation.error }, { status: 400 })
@@ -24,8 +26,16 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] File validation passed, extracting text...")
 
-    // Extract text from file
-    const extractedText = await extractTextFromFile(file)
+    // Read the file body ONCE here and pass a Buffer downstream
+    const arrayBuf = await file.arrayBuffer()
+    const buf = Buffer.from(arrayBuf)
+
+    const extractedText = await extractTextFromFile({
+      filename: file.name,
+      mime: file.type,
+      size: file.size,
+      buffer: buf,
+    })
 
     if (!extractedText || extractedText.trim().length < 10) {
       console.log("[v0] Extracted text too short:", extractedText?.length || 0, "characters")
