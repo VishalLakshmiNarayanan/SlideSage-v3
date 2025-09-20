@@ -7,9 +7,12 @@ import { Play, Pause, Download, RotateCcw, Volume2, VolumeX } from "lucide-react
 import type { GroqTeachpack } from "@/lib/schema"
 import { fetchPexelsVideo, fetchPexelsImage } from "@/lib/pexels"
 import { useToast } from "@/components/ui/toast"
+import { FeedbackBlock } from "./FeedbackBlock"
+import { generateTeachpack } from "@/lib/groq"
 
 interface ExplainerVideoProps {
   script: GroqTeachpack["script"]
+  onScriptUpdate?: (newScript: GroqTeachpack["script"]) => void
 }
 
 interface SceneWithMedia {
@@ -24,7 +27,7 @@ interface SceneWithMedia {
   imageElement?: HTMLImageElement
 }
 
-export function ExplainerVideo({ script }: ExplainerVideoProps) {
+export function ExplainerVideo({ script, onScriptUpdate }: ExplainerVideoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -47,6 +50,9 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
   const [sceneStartTime, setSceneStartTime] = useState(0)
   const [backgroundVideoIndex, setBackgroundVideoIndex] = useState(0)
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 1920, height: 1080 })
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [videoCompleted, setVideoCompleted] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const { showToast } = useToast()
 
@@ -287,6 +293,7 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
       }
     } else if (currentSceneIndex >= scenesWithMedia.length - 1 && isSpeechComplete) {
       setIsPlaying(false)
+      setVideoCompleted(true)
       window.speechSynthesis.cancel()
       currentSpeechRef.current = null
 
@@ -301,6 +308,41 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
       })
     }
   }, [isSpeechComplete, currentSceneIndex, scenesWithMedia, isPlaying, currentTime, speakText])
+
+  const handleFeedback = async (feedbackInstruction: string) => {
+    console.log("[v0] ExplainerVideo: Handling feedback:", feedbackInstruction)
+    setIsRegenerating(true)
+    try {
+      const originalContent = script.scenes.map((scene) => scene.dialogue).join(" ")
+      console.log("[v0] ExplainerVideo: Generating new teachpack with feedback")
+      const newTeachpack = await generateTeachpack(
+        `Previous explanation: ${originalContent}`,
+        `${feedbackInstruction} - Make sure this is completely different from the previous explanation.`,
+      )
+
+      console.log("[v0] ExplainerVideo: New teachpack generated, updating script")
+      if (onScriptUpdate && newTeachpack.script) {
+        onScriptUpdate(newTeachpack.script)
+      }
+
+      showToast({
+        title: "Content Regenerated",
+        description: "The explanation has been improved based on your feedback.",
+        variant: "success",
+      })
+      resetVideo()
+      setVideoCompleted(false)
+    } catch (error) {
+      console.error("[v0] ExplainerVideo: Failed to regenerate content:", error)
+      showToast({
+        title: "Regeneration Failed",
+        description: "Failed to improve the content. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -849,6 +891,19 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
           </div>
         </div>
       </Card>
+
+      {videoCompleted && (
+        <FeedbackBlock content={script.scenes.map((scene) => scene.dialogue).join(" ")} onRegenerate={handleFeedback} />
+      )}
+
+      {isRegenerating && (
+        <Card className="glass-card p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-white/70">Regenerating content based on your feedback...</p>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

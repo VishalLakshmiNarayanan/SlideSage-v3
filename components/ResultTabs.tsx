@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/lib/store"
 import { TeachingBlocks } from "./TeachingBlocks"
 import { ExplainerVideo } from "./ExplainerVideo"
-import { Heart, Lightbulb, List, Video, ArrowLeft } from "lucide-react"
+import { QuizBlock } from "./QuizBlock"
+import { Heart, Lightbulb, List, Video, ArrowLeft, Brain } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -15,11 +16,12 @@ const tabs = [
   { id: "diagram", label: "Step-by-step", icon: List },
   { id: "oneliner", label: "One-liner", icon: Lightbulb },
   { id: "video", label: "Video", icon: Video },
+  { id: "quiz", label: "Quiz", icon: Brain },
 ]
 
 export function ResultTabs() {
   const [activeTab, setActiveTab] = useState("analogy")
-  const { teachpack } = useAppStore()
+  const { teachpack, updateScript } = useAppStore()
   const router = useRouter()
 
   if (!teachpack) {
@@ -89,7 +91,12 @@ export function ResultTabs() {
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === "video" ? (
-          <ExplainerVideo script={teachpack.script} />
+          <ExplainerVideo script={teachpack.script} onScriptUpdate={updateScript} />
+        ) : activeTab === "quiz" ? (
+          <QuizBlock
+            content={teachpack.script.scenes.map((scene) => scene.dialogue).join(" ")}
+            onComplete={() => {}} // No need to close quiz in tab mode
+          />
         ) : (
           <TeachingBlocks teachpack={teachpack} activeMode={activeTab as "analogy" | "diagram" | "oneliner"} />
         )}

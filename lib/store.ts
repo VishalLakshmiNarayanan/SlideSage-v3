@@ -8,6 +8,7 @@ interface AppState {
   setInputText: (text: string) => void
   setTeachpack: (teachpack: GroqTeachpack) => void
   setLoading: (loading: boolean) => void
+  updateScript: (script: GroqTeachpack["script"]) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -17,4 +18,8 @@ export const useAppStore = create<AppState>((set) => ({
   setInputText: (text) => set({ inputText: text }),
   setTeachpack: (teachpack) => set({ teachpack }),
   setLoading: (loading) => set({ isLoading: loading }),
+  updateScript: (script) =>
+    set((state) => ({
+      teachpack: state.teachpack ? { ...state.teachpack, script } : null,
+    })),
 }))
