@@ -97,7 +97,7 @@ Pull requests are welcome! If you have feature ideas, feel free to open an issue
 
 ## 📜 License
 
-MIT License © 2025 [Vishal Lakshmi Narayanan](https://github.com/VishalLakshmiNarayanan)
+ [Vishal Lakshmi Narayanan](https://github.com/VishalLakshmiNarayanan)
 
 ---
 
