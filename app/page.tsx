@@ -5,7 +5,7 @@ import { ProfileCard } from "@/components/ProfileCard"
 import { ConceptsLearned } from "@/components/ConceptsLearned"
 import { Accelerator } from "@/components/Accelerator"
 import Image from "next/image"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 
 interface UserProgress {
   conceptsLearned: Array<{
@@ -26,55 +26,42 @@ export default function Home() {
     learningMultiplier: 1.0,
   })
 
-  const isUpdatingFromThisComponent = useRef(false)
-
   useEffect(() => {
     const savedProgress = localStorage.getItem("userProgress")
     if (savedProgress) {
-      const parsed = JSON.parse(savedProgress)
-      // Convert date strings back to Date objects
-      parsed.conceptsLearned = parsed.conceptsLearned.map((concept: any) => ({
-        ...concept,
-        completedAt: new Date(concept.completedAt),
-      }))
-      setUserProgress(parsed)
+      try {
+        const parsed = JSON.parse(savedProgress)
+        // Convert date strings back to Date objects
+        parsed.conceptsLearned = parsed.conceptsLearned.map((concept: any) => ({
+          ...concept,
+          completedAt: new Date(concept.completedAt),
+        }))
+        setUserProgress(parsed)
+      } catch (error) {
+        console.error("[v0] Error parsing saved progress:", error)
+      }
     }
   }, [])
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      if (!isUpdatingFromThisComponent.current) {
-        const savedProgress = localStorage.getItem("userProgress")
-        if (savedProgress) {
-          const parsed = JSON.parse(savedProgress)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "userProgress" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue)
           parsed.conceptsLearned = parsed.conceptsLearned.map((concept: any) => ({
             ...concept,
             completedAt: new Date(concept.completedAt),
           }))
           setUserProgress(parsed)
+        } catch (error) {
+          console.error("[v0] Error parsing storage change:", error)
         }
       }
     }
 
-    // Listen for storage events from other tabs/components
     window.addEventListener("storage", handleStorageChange)
-
-    // Also check for updates when the window gains focus (for same-tab updates)
-    window.addEventListener("focus", handleStorageChange)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("focus", handleStorageChange)
-    }
+    return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
-
-  useEffect(() => {
-    isUpdatingFromThisComponent.current = true
-    localStorage.setItem("userProgress", JSON.stringify(userProgress))
-    setTimeout(() => {
-      isUpdatingFromThisComponent.current = false
-    }, 100)
-  }, [userProgress])
 
   const handleConceptLearned = (concept: string, score: number) => {
     console.log("[v0] Concept learned:", concept, "Score:", score)
@@ -101,6 +88,9 @@ export default function Home() {
       }
 
       console.log("[v0] Updated progress:", updatedProgress)
+
+      localStorage.setItem("userProgress", JSON.stringify(updatedProgress))
+
       return updatedProgress
     })
   }
