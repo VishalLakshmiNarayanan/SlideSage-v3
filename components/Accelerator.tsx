@@ -102,39 +102,75 @@ export function Accelerator({ streak, multiplier, totalPoints }: AcceleratorProp
           <h3 className="text-lg font-semibold text-white">Achievement System</h3>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+          <div
+            className={`flex items-center justify-between p-2 rounded transition-all duration-300 ${
+              totalPoints >= 70
+                ? "bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 shadow-lg shadow-yellow-400/20"
+                : "bg-white/5"
+            }`}
+          >
             <div className="flex items-center gap-2">
               <span className="text-lg">🎉</span>
               <span className="text-sm text-white">First Concept (Welcome Badge)</span>
             </div>
-            <Badge variant={totalPoints >= 70 ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={totalPoints >= 70 ? "default" : "secondary"}
+              className={`text-xs ${totalPoints >= 70 ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/50" : ""}`}
+            >
               {totalPoints >= 70 ? "Unlocked" : "Locked"}
             </Badge>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+          <div
+            className={`flex items-center justify-between p-2 rounded transition-all duration-300 ${
+              streak >= 5
+                ? "bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 shadow-lg shadow-yellow-400/20"
+                : "bg-white/5"
+            }`}
+          >
             <div className="flex items-center gap-2">
               <span className="text-lg">🔥</span>
               <span className="text-sm text-white">Concept Collector (5 concepts)</span>
             </div>
-            <Badge variant={streak >= 5 ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={streak >= 5 ? "default" : "secondary"}
+              className={`text-xs ${streak >= 5 ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/50" : ""}`}
+            >
               {streak >= 5 ? "Unlocked" : "Locked"}
             </Badge>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+          <div
+            className={`flex items-center justify-between p-2 rounded transition-all duration-300 ${
+              totalPoints >= 500
+                ? "bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 shadow-lg shadow-yellow-400/20"
+                : "bg-white/5"
+            }`}
+          >
             <div className="flex items-center gap-2">
               <span className="text-lg">💎</span>
               <span className="text-sm text-white">Point Master (500 points)</span>
             </div>
-            <Badge variant={totalPoints >= 500 ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={totalPoints >= 500 ? "default" : "secondary"}
+              className={`text-xs ${totalPoints >= 500 ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/50" : ""}`}
+            >
               {totalPoints >= 500 ? "Unlocked" : "Locked"}
             </Badge>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+          <div
+            className={`flex items-center justify-between p-2 rounded transition-all duration-300 ${
+              streak >= 10
+                ? "bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 shadow-lg shadow-yellow-400/20"
+                : "bg-white/5"
+            }`}
+          >
             <div className="flex items-center gap-2">
               <span className="text-lg">🏆</span>
               <span className="text-sm text-white">Knowledge Expert (10 concepts)</span>
             </div>
-            <Badge variant={streak >= 10 ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={streak >= 10 ? "default" : "secondary"}
+              className={`text-xs ${streak >= 10 ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/50" : ""}`}
+            >
               {streak >= 10 ? "Unlocked" : "Locked"}
             </Badge>
           </div>

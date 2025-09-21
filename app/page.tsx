@@ -78,7 +78,7 @@ export default function Home() {
 
       const newStreak = newConceptsLearned.length
 
-      const newMultiplier = Math.min(3.0, 1.0 + Math.floor(newStreak / 5) * 0.2)
+      const newMultiplier = Math.min(3.0, 1.0 + Math.floor(newStreak / 2) * 0.1)
 
       const updatedProgress = {
         conceptsLearned: newConceptsLearned,
