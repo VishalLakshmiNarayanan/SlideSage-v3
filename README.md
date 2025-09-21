@@ -102,10 +102,3 @@ MIT License © 2025 [Vishal Lakshmi Narayanan](https://github.com/VishalLakshmiN
 ---
 
 > *“Learning doesn’t have to be boring. With SlideSage, knowledge comes alive.”*
-
-```
-
----
-
-Do you want me to also make you a **short, eye-catchy GitHub repo description tagline** (the one that shows up right under the repo name)?
-```
