@@ -1,104 +1,54 @@
+# Class Whisperer
 
+Transform dense lecture text into engaging analogies, clear diagrams, and short explainer videos using AI.
 
-````markdown
-# 📚 SlideSage
+## Features
 
-Turn dense concepts into **engaging explainer videos** powered by AI.  
-Give SlideSage a topic, and it generates a **30-second explainer video** with visuals, narration, and interactive quizzes to make learning stick.
+- **Three Teaching Modes**: Analogy, Diagram/Steps, One-liner
+- **Video Generation**: Create 30-60s animated explainer videos
+- **Dark Glass UI**: Polished glass-morphism design
+- **Groq Integration**: Powered by Groq's fast LLM API
+- **Client-side Video**: Generate WebM videos in the browser
 
-🔗 **Live App:** [slidesageai.vercel.app](https://slidesageai.vercel.app)  
-🔗 **GitHub Repo:** [VishalLakshmiNarayanan/SlideSage-v3](https://github.com/VishalLakshmiNarayanan/SlideSage-v3)
+## Setup
 
----
+1. Install dependencies:
+\`\`\`bash
+pnpm install
+\`\`\`
 
-## ✨ Features
+2. Set up environment variables:
+\`\`\`bash
+cp .env.example .env.local
+\`\`\`
 
-- 🎬 **AI Explainer Videos** – Enter a topic and get an instant video that simplifies it in under 30 seconds.
-- 🔄 **Adaptive Feedback** – Don’t get it? SlideSage will regenerate a simpler explanation until you do.
-- 📝 **Interactive Quizzes** – Test your understanding with auto-generated MCQs and view results.
-- 📊 **Learning Roadmap** – Concepts are broken into subtopics with progress tracking.
-- 🎨 **Modern UI** – Dark, glass-morphic theme with smooth components.
-- 🌐 **Free Resources** – Powered by **Groq API** + **Pexels API** for AI + free stock visuals.
+3. Add your Groq API key to `.env.local`:
+\`\`\`
+GROQ_API_KEY=your_groq_api_key_here
+\`\`\`
 
----
+4. Run the development server:
+\`\`\`bash
+pnpm dev
+\`\`\`
 
-## 🛠️ Tech Stack
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- **Frontend**: [Next.js 14](https://nextjs.org/), [TypeScript](https://www.typescriptlang.org/), [TailwindCSS](https://tailwindcss.com/)  
-- **Backend / API Routes**: Next.js App Router (`/app/api`)  
-- **AI**: [Groq LLM API](https://groq.com/)  
-- **Media**: [Pexels API](https://www.pexels.com/api/) for free stock images & videos  
-- **Database**: Supabase (for storing quiz results & user data)  
-- **Deployment**: [Vercel](https://vercel.com/)
+## Deployment
 
----
+Deploy to Vercel and set the `GROQ_API_KEY` environment variable in your project settings.
 
-## 📂 Project Structure
+## Tech Stack
 
-```bash
-SlideSage-v3-main/
-├── app/                # Next.js App Router
-│   ├── api/            # API routes (generate, quiz, evaluate)
-│   ├── layout.tsx      # Root layout
-│   ├── page.tsx        # Landing page
-│   └── studio/         # Studio mode
-├── components/         # Reusable UI & feature components
-│   └── ui/             # ShadCN UI components
-├── lib/                # API clients (groq, pexels, supabase)
-├── public/             # Static assets
-└── utils/              # Helpers (formatting, video helpers)
-````
+- **Next.js 14** (App Router, TypeScript)
+- **Tailwind CSS** (Glass-morphism design)
+- **Zustand** (State management)
+- **Groq API** (AI text generation)
+- **Canvas API** (Video generation)
+- **Zod** (Schema validation)
 
----
+## Notes
 
-## 🚀 Getting Started (Local Setup)
-
-1. **Clone the repo**
-
-   ```bash
-   git clone https://github.com/VishalLakshmiNarayanan/SlideSage-v3.git
-   cd SlideSage-v3
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-   (or use `npm install` / `yarn install`)
-
-3. **Set up environment variables**
-   Create a `.env.local` file with:
-
-   ```bash
-   GROQ_API_KEY=your_groq_key
-   PEXELS_API_KEY=your_pexels_key
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_KEY=your_supabase_key
-   ```
-
-4. **Run the dev server**
-
-   ```bash
-   pnpm dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) 🚀
-
----
-
-
-## 🤝 Contributing
-
-Pull requests are welcome! If you have feature ideas, feel free to open an issue.
-
----
-
-## 📜 License
-
- [Vishal Lakshmi Narayanan](https://github.com/VishalLakshmiNarayanan)
-
----
-
-> *“Learning doesn’t have to be boring. With SlideSage, knowledge comes alive.”*
+- WebM video export works best on Chrome-based browsers
+- Rate limited to 10 requests per hour per IP
+- Only uses Groq API - no other external services required

@@ -110,14 +110,17 @@ export function ResultTabs() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 variant={activeTab === tab.id ? "default" : "ghost"}
-                className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                className={`flex-1 py-3 px-4 rounded-lg transition-all duration-300 whitespace-nowrap relative overflow-hidden ${
                   activeTab === tab.id
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 border border-violet-400/50 matrix-button"
+                    : "text-white/70 hover:text-white hover:bg-white/10 border border-transparent hover:border-violet-500/30"
                 }`}
               >
-                <Icon className="w-4 h-4 mr-2" />
-                {tab.label}
+                <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? "text-white drop-shadow-sm" : ""}`} />
+                <span className={activeTab === tab.id ? "font-semibold text-shadow" : ""}>{tab.label}</span>
+                {activeTab === tab.id && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 to-purple-400/20 animate-pulse pointer-events-none" />
+                )}
               </Button>
             )
           })}

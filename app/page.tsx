@@ -96,32 +96,34 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen p-4">
-      <div className="w-full max-w-6xl mx-auto space-y-6">
-        <ProfileCard
-          streak={userProgress.streak}
-          totalPoints={userProgress.totalPoints}
-          learningMultiplier={userProgress.learningMultiplier}
-        />
-
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <Image src="/images/sage-logo.png" alt="Slide Sage Logo" width={80} height={80} className="rounded-xl" />
-            <h1 className="text-4xl md:text-6xl font-bold glow-text">Slidesage</h1>
-          </div>
-          <p className="text-xl text-white/70 max-w-2xl mx-auto mb-8">
-            Turn complexity into clarity with engaging dialogue-based explainer videos powered by AI
-          </p>
-          <InputCard onConceptLearned={handleConceptLearned} />
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <ConceptsLearned concepts={userProgress.conceptsLearned} />
-          <Accelerator
+    <main className="min-h-screen w-full relative">
+      <div className="relative z-10 p-4">
+        <div className="w-full max-w-6xl mx-auto space-y-6">
+          <ProfileCard
             streak={userProgress.streak}
-            multiplier={userProgress.learningMultiplier}
             totalPoints={userProgress.totalPoints}
+            learningMultiplier={userProgress.learningMultiplier}
           />
+
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Image src="/images/sage-logo.png" alt="Slide Sage Logo" width={80} height={80} className="rounded-xl" />
+              <h1 className="text-4xl md:text-6xl font-bold glow-text">Slidesage</h1>
+            </div>
+            <p className="text-xl text-white/70 max-w-2xl mx-auto mb-8">
+              Turn complexity into clarity with engaging dialogue-based explainer videos powered by AI
+            </p>
+            <InputCard onConceptLearned={handleConceptLearned} />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <ConceptsLearned concepts={userProgress.conceptsLearned} />
+            <Accelerator
+              streak={userProgress.streak}
+              multiplier={userProgress.learningMultiplier}
+              totalPoints={userProgress.totalPoints}
+            />
+          </div>
         </div>
       </div>
     </main>
