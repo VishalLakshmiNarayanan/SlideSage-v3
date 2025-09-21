@@ -1,4 +1,4 @@
-Got it 🚀 Here’s a polished **README.md** you can drop into your GitHub repo. I’ve written it to look professional and engaging, with your repo + deployed app link included.
+
 
 ````markdown
 # 📚 SlideSage
