@@ -12,7 +12,11 @@ import { useToast } from "@/components/ui/toast"
 
 const SAMPLE_TEXT = `Eigenvectors are special vectors that don't change direction when a linear transformation is applied to them. When you multiply a matrix A by an eigenvector v, you get back a scalar multiple of the same vector: Av = λv, where λ is the eigenvalue. This property makes eigenvectors fundamental to understanding how linear transformations behave, as they represent the "natural directions" of the transformation. In practical applications, eigenvectors help us find principal components in data analysis, solve systems of differential equations, and understand the stability of dynamical systems.`
 
-export function InputCard() {
+interface InputCardProps {
+  onConceptLearned?: (concept: string, score: number) => void
+}
+
+export function InputCard({ onConceptLearned }: InputCardProps) {
   const [text, setText] = useState("")
   const { setInputText, setTeachpack, setLoading, isLoading } = useAppStore()
   const { showToast } = useToast()
@@ -34,6 +38,9 @@ export function InputCard() {
     try {
       const teachpack = await generateTeachpack(text)
       setTeachpack(teachpack)
+      if (onConceptLearned) {
+        useAppStore.getState().setOnConceptLearned(onConceptLearned)
+      }
       showToast({
         title: "Success!",
         description: "Your lecture has been transformed into teaching formats.",

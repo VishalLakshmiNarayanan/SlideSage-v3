@@ -7,9 +7,9 @@ import { useAppStore } from "@/lib/store"
 import { TeachingBlocks } from "./TeachingBlocks"
 import { ExplainerVideo } from "./ExplainerVideo"
 import { QuizBlock } from "./QuizBlock"
+import Image from "next/image"
 import { Heart, Lightbulb, List, Video, ArrowLeft, Brain } from "lucide-react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 
 const tabs = [
   { id: "analogy", label: "Analogy", icon: Heart },
@@ -23,6 +23,42 @@ export function ResultTabs() {
   const [activeTab, setActiveTab] = useState("analogy")
   const { teachpack, updateScript } = useAppStore()
   const router = useRouter()
+
+  const handleConceptLearned = (concept: string, score: number) => {
+    console.log("[v0] ResultTabs: Concept learned:", concept, "Score:", score)
+
+    const existingProgress = JSON.parse(
+      localStorage.getItem("userProgress") ||
+        '{"conceptsLearned":[],"streak":0,"totalPoints":0,"learningMultiplier":1.0}',
+    )
+
+    const newConcept = {
+      concept,
+      score,
+      completedAt: new Date().toISOString(),
+    }
+
+    // Check if concept already exists, if so update it
+    const existingIndex = existingProgress.conceptsLearned.findIndex((c: any) => c.concept === concept)
+    if (existingIndex >= 0) {
+      existingProgress.conceptsLearned[existingIndex] = newConcept
+    } else {
+      existingProgress.conceptsLearned.push(newConcept)
+    }
+
+    existingProgress.streak = existingProgress.conceptsLearned.length
+
+    const points = score >= 70 ? Math.floor(score * existingProgress.learningMultiplier) : 0
+    existingProgress.totalPoints += points
+
+    existingProgress.learningMultiplier = Math.min(3.0, 1.0 + Math.floor(existingProgress.streak / 5) * 0.2)
+
+    localStorage.setItem("userProgress", JSON.stringify(existingProgress))
+
+    console.log("[v0] ResultTabs: Updated progress:", existingProgress)
+
+    window.dispatchEvent(new Event("userProgressUpdated"))
+  }
 
   if (!teachpack) {
     return (
@@ -66,7 +102,7 @@ export function ResultTabs() {
 
       {/* Tab Navigation */}
       <Card className="glass-card p-2">
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
@@ -74,7 +110,7 @@ export function ResultTabs() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 variant={activeTab === tab.id ? "default" : "ghost"}
-                className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 ${
+                className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-blue-600 text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/10"
@@ -95,7 +131,9 @@ export function ResultTabs() {
         ) : activeTab === "quiz" ? (
           <QuizBlock
             content={teachpack.script.scenes.map((scene) => scene.dialogue).join(" ")}
-            onComplete={() => {}} // No need to close quiz in tab mode
+            topic={teachpack.topic}
+            onComplete={() => router.push("/")}
+            onConceptLearned={handleConceptLearned}
           />
         ) : (
           <TeachingBlocks teachpack={teachpack} activeMode={activeTab as "analogy" | "diagram" | "oneliner"} />
