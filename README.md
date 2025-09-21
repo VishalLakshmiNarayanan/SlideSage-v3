@@ -88,25 +88,6 @@ SlideSage-v3-main/
 
 ---
 
-## 📸 Screenshots
-
-### Home Page
-
-![SlideSage Home](public/SlideSageLogo.png)
-
-### Explainer Video Demo
-
-*(insert GIF or screenshot here)*
-
----
-
-## 🎯 Roadmap
-
-* [ ] Add multi-language support for videos & quizzes
-* [ ] Allow users to save/share generated videos
-* [ ] Personal dashboards with progress history
-
----
 
 ## 🤝 Contributing
 
