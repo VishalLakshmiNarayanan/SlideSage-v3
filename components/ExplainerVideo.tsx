@@ -7,37 +7,12 @@ import { Play, Pause, Download, RotateCcw, Volume2, VolumeX } from "lucide-react
 import type { GroqTeachpack } from "@/lib/schema"
 import { fetchPexelsVideo, fetchPexelsImage } from "@/lib/pexels"
 import { useToast } from "@/components/ui/toast"
-
-// Wait until browser speech voices are actually loaded
-function getVoicesReady(): Promise<SpeechSynthesisVoice[]> {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    return Promise.resolve([])
-  }
-  const synth = window.speechSynthesis
-  const now = synth.getVoices()
-  if (now && now.length) return Promise.resolve(now)
-
-  return new Promise((resolve) => {
-    const handler = () => {
-      const v = synth.getVoices()
-      if (v && v.length) {
-        synth.removeEventListener("voiceschanged", handler)
-        resolve(v)
-      }
-    }
-    synth.addEventListener("voiceschanged", handler)
-
-    // Failsafe: some browsers may not fire the event
-    setTimeout(() => {
-      const v = synth.getVoices()
-      resolve(v || [])
-      synth.removeEventListener("voiceschanged", handler)
-    }, 1500)
-  })
-}
+import { FeedbackBlock } from "./FeedbackBlock"
+import { generateTeachpack } from "@/lib/groq"
 
 interface ExplainerVideoProps {
   script: GroqTeachpack["script"]
+  onScriptUpdate?: (newScript: GroqTeachpack["script"]) => void
 }
 
 interface SceneWithMedia {
@@ -52,7 +27,7 @@ interface SceneWithMedia {
   imageElement?: HTMLImageElement
 }
 
-export function ExplainerVideo({ script }: ExplainerVideoProps) {
+export function ExplainerVideo({ script, onScriptUpdate }: ExplainerVideoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -75,6 +50,9 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
   const [sceneStartTime, setSceneStartTime] = useState(0)
   const [backgroundVideoIndex, setBackgroundVideoIndex] = useState(0)
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 1920, height: 1080 })
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [videoCompleted, setVideoCompleted] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const { showToast } = useToast()
 
@@ -152,18 +130,23 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
   }, [script.scenes])
 
   useEffect(() => {
-  let mounted = true
-  ;(async () => {
-    if (!("speechSynthesis" in window)) return
-    const voices = await getVoicesReady()
-    if (!mounted) return
-    console.log("[v0] Available voices:", voices.map((v) => `${v.name} (${v.lang})`))
-  })()
-  return () => {
-    mounted = false
-  }
-}, [])
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices()
+      console.log(
+        "[v0] Available voices:",
+        voices.map((v) => `${v.name} (${v.lang})`),
+      )
+    }
 
+    if ("speechSynthesis" in window) {
+      loadVoices()
+      window.speechSynthesis.addEventListener("voiceschanged", loadVoices)
+
+      return () => {
+        window.speechSynthesis.removeEventListener("voiceschanged", loadVoices)
+      }
+    }
+  }, [])
 
   const getCurrentScene = useCallback(() => {
     if (currentSceneIndex >= scenesWithMedia.length) {
@@ -188,95 +171,93 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
   }, [currentSceneIndex, scenesWithMedia, currentTime, sceneStartTime])
 
   const speakText = useCallback(
-  async (text: string, speaker: string, onComplete?: () => void) => {
-    if (!audioEnabled || !("speechSynthesis" in window)) {
-      if (onComplete) {
-        const estimatedDuration = (text.split(" ").length / 2.5) * 1000
-        setTimeout(onComplete, estimatedDuration)
+    (text: string, speaker: string, onComplete?: () => void) => {
+      if (!audioEnabled || !("speechSynthesis" in window)) {
+        if (onComplete) {
+          const estimatedDuration = (text.split(" ").length / 2.5) * 1000
+          setTimeout(onComplete, estimatedDuration)
+        }
+        return
       }
-      return
-    }
 
-    if (currentSpeechRef.current === text) {
-      console.log("[v0] Speech already in progress for:", text.substring(0, 50))
-      return
-    }
-
-    window.speechSynthesis.cancel()
-    setIsSpeechComplete(false)
-    currentSpeechRef.current = text
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 0.9
-    utterance.volume = 0.8
-
-    // WAIT for voices to be ready (fixes initial [] → later populated race)
-    const voices = await getVoicesReady()
-
-    if (speaker === "Student") {
-      utterance.pitch = 1.2
-      const femaleVoice =
-        voices.find(
-          (v) =>
-            v.lang.startsWith("en") &&
-            (v.name.toLowerCase().includes("female") ||
-              v.name.toLowerCase().includes("woman") ||
-              v.name.toLowerCase().includes("samantha") ||
-              v.name.toLowerCase().includes("karen") ||
-              v.name.toLowerCase().includes("susan") ||
-              v.name.toLowerCase().includes("victoria") ||
-              v.name.toLowerCase().includes("zira")),
-        ) || voices.find((v) => v.lang.startsWith("en") && v.name.toLowerCase().includes("us"))
-
-      if (femaleVoice) {
-        utterance.voice = femaleVoice
-        console.log("[v0] Using female voice for student:", femaleVoice.name)
+      if (currentSpeechRef.current === text) {
+        console.log("[v0] Speech already in progress for:", text.substring(0, 50))
+        return
       }
-    } else {
-      utterance.pitch = 0.8
-      const maleVoice =
-        voices.find(
-          (v) =>
-            v.lang.startsWith("en") &&
-            (v.name.toLowerCase().includes("male") ||
-              v.name.toLowerCase().includes("man") ||
-              v.name.toLowerCase().includes("david") ||
-              v.name.toLowerCase().includes("mark") ||
-              v.name.toLowerCase().includes("daniel") ||
-              v.name.toLowerCase().includes("alex")),
-        ) || voices.find((v) => v.lang.startsWith("en"))
 
-      if (maleVoice) {
-        utterance.voice = maleVoice
-        console.log("[v0] Using male voice for sage:", maleVoice.name)
+      window.speechSynthesis.cancel()
+      setIsSpeechComplete(false)
+      currentSpeechRef.current = text
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.9
+      utterance.volume = 0.8
+
+      const voices = window.speechSynthesis.getVoices()
+
+      if (speaker === "Student") {
+        utterance.pitch = 1.2
+        const femaleVoice =
+          voices.find(
+            (v) =>
+              v.lang.startsWith("en") &&
+              (v.name.toLowerCase().includes("female") ||
+                v.name.toLowerCase().includes("woman") ||
+                v.name.toLowerCase().includes("samantha") ||
+                v.name.toLowerCase().includes("karen") ||
+                v.name.toLowerCase().includes("susan") ||
+                v.name.toLowerCase().includes("victoria") ||
+                v.name.toLowerCase().includes("zira")),
+          ) || voices.find((v) => v.lang.startsWith("en") && v.name.toLowerCase().includes("us"))
+
+        if (femaleVoice) {
+          utterance.voice = femaleVoice
+          console.log("[v0] Using female voice for student:", femaleVoice.name)
+        }
+      } else {
+        utterance.pitch = 0.8
+        const maleVoice =
+          voices.find(
+            (v) =>
+              v.lang.startsWith("en") &&
+              (v.name.toLowerCase().includes("male") ||
+                v.name.toLowerCase().includes("man") ||
+                v.name.toLowerCase().includes("david") ||
+                v.name.toLowerCase().includes("mark") ||
+                v.name.toLowerCase().includes("daniel") ||
+                v.name.toLowerCase().includes("alex")),
+          ) || voices.find((v) => v.lang.startsWith("en"))
+
+        if (maleVoice) {
+          utterance.voice = maleVoice
+          console.log("[v0] Using male voice for sage:", maleVoice.name)
+        }
       }
-    }
 
-    if (!utterance.voice && voices.length) {
-      const englishVoice = voices.find((v) => v.lang.startsWith("en")) || voices[0]
-      if (englishVoice) utterance.voice = englishVoice
-    }
+      if (!utterance.voice) {
+        const englishVoice = voices.find((v) => v.lang.startsWith("en")) || voices[0]
+        if (englishVoice) utterance.voice = englishVoice
+      }
 
-    utterance.onend = () => {
-      console.log("[v0] Speech completed for:", speaker)
-      setIsSpeechComplete(true)
-      currentSpeechRef.current = null
-      if (onComplete) onComplete()
-    }
+      utterance.onend = () => {
+        console.log("[v0] Speech completed for:", speaker)
+        setIsSpeechComplete(true)
+        currentSpeechRef.current = null
+        if (onComplete) onComplete()
+      }
 
-    utterance.onerror = (event) => {
-      console.log("[v0] Speech error:", (event as any).error)
-      setIsSpeechComplete(true)
-      currentSpeechRef.current = null
-      if (onComplete) onComplete()
-    }
+      utterance.onerror = (event) => {
+        console.log("[v0] Speech error:", event.error)
+        setIsSpeechComplete(true)
+        currentSpeechRef.current = null
+        if (onComplete) onComplete()
+      }
 
-    speechRef.current = utterance
-    window.speechSynthesis.speak(utterance)
-  },
-  [audioEnabled],
-)
-
+      speechRef.current = utterance
+      window.speechSynthesis.speak(utterance)
+    },
+    [audioEnabled],
+  )
 
   useEffect(() => {
     if (!isPlaying || isTransitioningRef.current) return
@@ -312,6 +293,7 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
       }
     } else if (currentSceneIndex >= scenesWithMedia.length - 1 && isSpeechComplete) {
       setIsPlaying(false)
+      setVideoCompleted(true)
       window.speechSynthesis.cancel()
       currentSpeechRef.current = null
 
@@ -326,6 +308,41 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
       })
     }
   }, [isSpeechComplete, currentSceneIndex, scenesWithMedia, isPlaying, currentTime, speakText])
+
+  const handleFeedback = async (feedbackInstruction: string) => {
+    console.log("[v0] ExplainerVideo: Handling feedback:", feedbackInstruction)
+    setIsRegenerating(true)
+    try {
+      const originalContent = script.scenes.map((scene) => scene.dialogue).join(" ")
+      console.log("[v0] ExplainerVideo: Generating new teachpack with feedback")
+      const newTeachpack = await generateTeachpack(
+        `Previous explanation: ${originalContent}`,
+        `${feedbackInstruction} - Make sure this is completely different from the previous explanation.`,
+      )
+
+      console.log("[v0] ExplainerVideo: New teachpack generated, updating script")
+      if (onScriptUpdate && newTeachpack.script) {
+        onScriptUpdate(newTeachpack.script)
+      }
+
+      showToast({
+        title: "Content Regenerated",
+        description: "The explanation has been improved based on your feedback.",
+        variant: "success",
+      })
+      resetVideo()
+      setVideoCompleted(false)
+    } catch (error) {
+      console.error("[v0] ExplainerVideo: Failed to regenerate content:", error)
+      showToast({
+        title: "Regeneration Failed",
+        description: "Failed to improve the content. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -874,6 +891,19 @@ export function ExplainerVideo({ script }: ExplainerVideoProps) {
           </div>
         </div>
       </Card>
+
+      {videoCompleted && (
+        <FeedbackBlock content={script.scenes.map((scene) => scene.dialogue).join(" ")} onRegenerate={handleFeedback} />
+      )}
+
+      {isRegenerating && (
+        <Card className="glass-card p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-white/70">Regenerating content based on your feedback...</p>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
