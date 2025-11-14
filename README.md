@@ -476,7 +476,3 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 Created to democratize educational content creation and empower educators to produce high-quality teaching materials in minutes, not hours.
 
 ---
-
-<p align="center">
-  <b>Built with ❤️ by Educators, for Educators</b>
-</p>
